@@ -1,0 +1,11 @@
+# .dockerignore
+
+# node_modulesはイメージビルド時にnpm installで再生成されるため無視
+node_modules
+# OS固有の一時ファイル
+.DS_Store
+# Docker関連ファイル自体を無視
+Dockerfile
+.dockerignore
+# ログなど
+npm-debug.log*
