@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Webスクレイピングクライアント (Node.js/Puppeteer)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 800px; margin: auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        #urlForm { display: flex; gap: 10px; margin-bottom: 30px; }
+        #urlInput { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        #scrapeButton { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
+        #scrapeButton:hover:not(:disabled) { background-color: #0056b3; }
+        #scrapeButton:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #output { border: 1px solid #e0e0e0; padding: 15px; background-color: #fff; min-height: 200px; overflow: auto; border-radius: 4px; font-family: monospace; font-size: 14px; line-height: 1.4; }
+        .status { margin-top: 10px; font-size: 14px; }
+        .loading { color: orange; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Webページ テキスト抽出ツール</h1>
+
+        <form id="urlForm">
+            <input type="url" id="urlInput" placeholder="スクレイピング対象URLを入力 (例: https://google.com)" required>
+            <button type="submit" id="scrapeButton">スクレイピング実行</button>
+        </form>
+
+        <div class="status" id="statusMessage">準備完了</div>
+
+        <h2>抽出された全テキスト</h2>
+        <div id="output">
+            ここにサーバーからのスクレイピング結果が表示されます...
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const urlInput = document.getElementById('urlInput');
+        const outputDiv = document.getElementById('output');
+        const scrapeButton = document.getElementById('scrapeButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+
+            const url = urlInput.value;
+            statusMessage.className = 'status loading';
+            statusMessage.textContent = `処理中... ${url} をスクレイピングしています。`;
+            outputDiv.textContent = '';
+            scrapeButton.disabled = true;
+
+            try {
+                // Node.jsサーバーのAPIにリクエストを送信
+                const response = await fetch('http://localhost:3000/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url }),
+                });
+
+                if (response.ok) {
+                    // 成功 (ステータスコード 200)
+                    const resultText = await response.text();
+                    outputDiv.textContent = resultText;
+                    statusMessage.className = 'status';
+                    statusMessage.textContent = 'スクレイピングが完了しました。';
+                } else {
+                    // サーバー側でエラー (ステータスコード 4xx または 5xx)
+                    const errorData = await response.json();
+                    const errorMessage = errorData.error || '不明なサーバーエラーが発生しました。';
+                    outputDiv.textContent = errorMessage;
+                    statusMessage.className = 'status error';
+                    statusMessage.textContent = `エラーが発生しました: ${errorMessage}`;
+                }
+            } catch (error) {
+                // ネットワークエラーなど
+                const errorMessage = `ネットワークエラーが発生しました。サーバーが起動しているか、URLが正しいか確認してください。 (${error.message})`;
+                outputDiv.textContent = errorMessage;
+                statusMessage.className = 'status error';
+                statusMessage.textContent = errorMessage;
+            } finally {
+                scrapeButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
