@@ -1,4 +1,4 @@
-# invidious-
+# new-youtube
 invidiousのマネをしようとしてる馬鹿な人です。
 最終的にはrenderで動くようにしていきます。
 簡単にしようとしている事を説明すると，
